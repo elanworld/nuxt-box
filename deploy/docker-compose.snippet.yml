@@ -1,0 +1,13 @@
+  # Service name may stay task-library on prod; only the image reference changes after migration.
+  task-library:
+    image: ${DOCKER_HUB_USER:-alanwoods}/nuxt-box-node:latest
+    container_name: task-library
+    ports:
+      - "127.0.0.1:8083:3000"
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Shanghai
+      SQLITE_PATH: /data/tasks.db
+      NUXT_APP_BASE_URL: /task-library/
+    volumes:
+      - /data/task-library:/data

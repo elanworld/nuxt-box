@@ -1,0 +1,32 @@
+{
+  "name": "nuxt-box",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "nuxt build",
+    "build:node": "NUXT_NITRO_PRESET=node-server nuxt build",
+    "build:cloudflare-d1": "NUXT_NITRO_PRESET=cloudflare_module nuxt build",
+    "build:worker-sqlite-image": "docker build -f Dockerfile.worker-sqlite -t nuxt-box-worker-sqlite:verify .",
+    "build:node-image": "docker build -f Dockerfile.node -t nuxt-box-node:verify .",
+    "db:generate": "drizzle-kit generate",
+    "db:push": "drizzle-kit push",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "test:api": "node ./scripts/smoke-api.mjs",
+    "test:worker-sqlite": "node ./scripts/smoke-worker-sqlite.mjs"
+  },
+  "dependencies": {
+    "better-sqlite3": "^13.2.0",
+    "drizzle-orm": "^0.45.4",
+    "nanoid": "^6.0.2",
+    "nuxt": "^4.6.4",
+    "vue": "^3.5.45",
+    "vue-router": "^5.4.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^9.6.0",
+    "drizzle-kit": "^0.31.11"
+  }
+}
