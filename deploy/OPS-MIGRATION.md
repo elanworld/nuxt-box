@@ -18,14 +18,22 @@
 | `alanwoods/task-library:latest` (alias) | `alanwoods/nuxt-box:latest` (alias of node build) |
 | `alanwoods/task-library-worker-sqlite:latest` | `alanwoods/nuxt-box-worker-sqlite:latest` |
 
-In `/root/box/shell-tool/config/.git-action/docker-compose.yml`, change only the `image:` line for `task-library` to `alanwoods/nuxt-box-node@<digest>` after pull.
+In `/root/box/shell-tool/config/.git-action/docker-compose.yml`, change only the `image:` line for `task-library` to the pinned node digest below (or `latest` after verifying pull).
+
+**Pinned digests (built in Cursor, 2026-11-23):**
+
+| Image | Pull reference |
+| --- | --- |
+| Production Node | `alanwoods/nuxt-box-node@sha256:7be86926eb63002a193577798fa9ebf95d8730b5dad2f7f5483b4bbf9648adc0` |
+| Alias (same layers as node) | `alanwoods/nuxt-box@sha256:7be86926eb63002a193577798fa9ebf95d8730b5dad2f7f5483b4bbf9648adc0` |
+| Worker SQLite (optional) | `alanwoods/nuxt-box-worker-sqlite@sha256:d21390e76c91c0baa159bac3ef3e22d19a342793f44cb5bae90d2d260fb783ca` |
 
 Remove `env_file: ./config/task-library.env` if it only held `TASK_LIBRARY_BOT_TOKEN` — the app no longer reads a fixed bot secret.
 
 ## Nginx
 
 - Use a **single** `location /task-library/` block (see `deploy/nginx.location.snippet.conf`).
-- **Delete** the old `location /task-library/api/bot/` bypass that skipped gateway auth.
+- **If** an old `location /task-library/api/bot/` bypass still exists on a host (skipped gateway auth), remove it. Current production already uses one admin-protected `/task-library/` location only.
 - Writes use the same admin session as the UI: `Authorization` header or `Authorization` cookie from Quarkus/Gin login.
 
 ## Commands (production)

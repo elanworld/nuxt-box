@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# Requires docker logged in (e.g. sudo docker login). When using sudo, preserve env:
+#   export DOCKER_HUB_USERNAME=... DOCKER_HUB_ACCESS_TOKEN=...
+#   sudo -E bash scripts/build-and-push-images.sh latest
 : "${DOCKER_HUB_USERNAME:?set DOCKER_HUB_USERNAME}"
 TAG="${1:-latest}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
