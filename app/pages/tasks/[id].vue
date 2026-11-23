@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { statusLabel, formatTaskTime, taskStatusOptions } from '../../composables/useTaskLabels'
+import { useTaskWriter } from '../../composables/useTaskWriter'
+
 const route = useRoute()
 const taskId = computed(() => String(route.params.id))
 
@@ -25,20 +28,79 @@ const { data, error, pending, refresh } = await useAsyncData(
   { watch: [taskId] },
 )
 
-function statusLabel(status: string | null) {
-  if (!status) return ''
-  const map: Record<string, string> = {
-    todo: '待办',
-    doing: '进行中',
-    done: '已完成',
-    cancelled: '已取消',
+const editing = ref(false)
+const editTitle = ref('')
+const editDescription = ref('')
+const editStatus = ref('todo')
+const editMessage = ref('')
+
+const { updateTask, removeTask, saving, actionError } = useTaskWriter()
+
+watch(
+  data,
+  (value) => {
+    if (!value?.task) return
+    editTitle.value = value.task.title
+    editDescription.value = value.task.description ?? ''
+    editStatus.value = value.task.status
+    editMessage.value = ''
+  },
+  { immediate: true },
+)
+
+function startEdit() {
+  editing.value = true
+  actionError.value = ''
+  if (data.value?.task) {
+    editTitle.value = data.value.task.title
+    editDescription.value = data.value.task.description ?? ''
+    editStatus.value = data.value.task.status
+    editMessage.value = ''
   }
-  return map[status] ?? status
 }
 
-function formatTime(value: string | Date) {
-  const date = value instanceof Date ? value : new Date(value)
-  return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString('zh-CN')
+async function submitEdit() {
+  actionError.value = ''
+  const title = editTitle.value.trim()
+  const message = editMessage.value.trim()
+  if (!title) {
+    actionError.value = '请填写标题'
+    return
+  }
+  if (!message) {
+    actionError.value = '请填写本次进展说明'
+    return
+  }
+  saving.value = true
+  try {
+    await updateTask(taskId.value, {
+      title,
+      description: editDescription.value.trim() || null,
+      status: editStatus.value,
+      message,
+    })
+    editing.value = false
+    await refresh()
+  } catch (e) {
+    actionError.value = e instanceof Error ? e.message : '保存失败'
+  } finally {
+    saving.value = false
+  }
+}
+
+async function confirmDelete() {
+  if (!import.meta.client) return
+  if (!window.confirm('确定删除该任务？删除后无法恢复（含进展历史）。')) return
+  actionError.value = ''
+  saving.value = true
+  try {
+    await removeTask(taskId.value)
+    await navigateTo('/')
+  } catch (e) {
+    actionError.value = e instanceof Error ? e.message : '删除失败'
+  } finally {
+    saving.value = false
+  }
 }
 </script>
 
@@ -57,19 +119,56 @@ function formatTime(value: string | Date) {
       </header>
       <p v-if="data.task.description" class="desc">{{ data.task.description }}</p>
       <p class="meta">
-        创建于 {{ formatTime(data.task.createdAt) }} · 更新于 {{ formatTime(data.task.updatedAt) }}
+        创建于 {{ formatTaskTime(data.task.createdAt) }} · 更新于 {{ formatTaskTime(data.task.updatedAt) }}
       </p>
+
+      <div class="actions">
+        <button v-if="!editing" type="button" class="btn" @click="startEdit">编辑</button>
+        <button type="button" class="btn danger" :disabled="saving" @click="confirmDelete">删除</button>
+      </div>
+
+      <form v-if="editing" class="edit-form" @submit.prevent="submitEdit">
+        <h2 class="form-title">编辑任务</h2>
+        <label class="field">
+          <span>标题</span>
+          <input v-model="editTitle" type="text" required maxlength="500" />
+        </label>
+        <label class="field">
+          <span>说明</span>
+          <textarea v-model="editDescription" rows="3" />
+        </label>
+        <label class="field">
+          <span>状态</span>
+          <select v-model="editStatus">
+            <option v-for="opt in taskStatusOptions" :key="opt.value" :value="opt.value">
+              {{ opt.label }}
+            </option>
+          </select>
+        </label>
+        <label class="field">
+          <span>本次进展说明（必填）</span>
+          <input v-model="editMessage" type="text" placeholder="记录本次修改原因或进展" required />
+        </label>
+        <div class="form-actions">
+          <button type="submit" class="primary-btn" :disabled="saving">
+            {{ saving ? '保存中…' : '保存' }}
+          </button>
+          <button type="button" class="btn" :disabled="saving" @click="editing = false">取消</button>
+        </div>
+      </form>
+
+      <p v-if="actionError" class="state error" role="alert">{{ actionError }}</p>
 
       <h2 class="section-title">进展历史</h2>
       <ol class="timeline">
         <li v-for="item in data.updates" :key="item.id">
-          <time>{{ formatTime(item.createdAt) }}</time>
+          <time>{{ formatTaskTime(item.createdAt) }}</time>
           <p class="msg">{{ item.message }}</p>
           <p v-if="item.status" class="status-note">状态：{{ statusLabel(item.status) }}</p>
         </li>
       </ol>
     </template>
-    <button type="button" class="refresh" @click="refresh()">刷新</button>
+    <button type="button" class="btn refresh" @click="refresh()">刷新</button>
   </section>
 </template>
 
@@ -113,6 +212,76 @@ h1 {
   font-size: 0.85rem;
 }
 
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+.btn {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  border-radius: 8px;
+  padding: 0.35rem 0.75rem;
+  cursor: pointer;
+}
+
+.btn.danger {
+  border-color: #c92a2a;
+  color: #f86a6a;
+}
+
+.primary-btn {
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #fff;
+  border-radius: 8px;
+  padding: 0.4rem 0.9rem;
+  cursor: pointer;
+}
+
+.primary-btn:disabled {
+  opacity: 0.6;
+}
+
+.edit-form {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.form-title {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+}
+
+.field input,
+.field textarea,
+.field select {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.45rem 0.6rem;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+}
+
+.form-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
 .section-title {
   margin: 1.25rem 0 0.75rem;
   font-size: 1rem;
@@ -150,11 +319,5 @@ time {
 
 .refresh {
   margin-top: 1rem;
-  border: 1px solid var(--border);
-  background: transparent;
-  color: var(--text);
-  border-radius: 8px;
-  padding: 0.35rem 0.75rem;
-  cursor: pointer;
 }
 </style>

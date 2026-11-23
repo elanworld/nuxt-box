@@ -27,7 +27,7 @@ Nuxt 4 + SQLite + Drizzle 任务库（从 `dolphins-web/task-library` 迁出）�
 
 - `GET /api/tasks?status=active|done|all|…`
 - `GET /api/tasks/:id`
-- `POST /api/bot/tasks` · `PATCH /api/bot/tasks/:id`（需网关 admin 身份）
+- `POST /api/bot/tasks` · `PATCH /api/bot/tasks/:id` · `DELETE /api/bot/tasks/:id`（需网关 admin 身份；页面同域请求会带上网关 Cookie）
 
 ## 本地开发与测试
 

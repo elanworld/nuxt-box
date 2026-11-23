@@ -80,6 +80,18 @@ async function run() {
       throw new Error('expected at least 2 updates in history')
     }
 
+    const deleteRes = await fetch(`${base}/api/bot/tasks/${id}`, {
+      method: 'DELETE',
+      headers: writeHeaders,
+    })
+    if (!deleteRes.ok) {
+      throw new Error(`delete failed: ${deleteRes.status} ${await deleteRes.text()}`)
+    }
+    const goneRes = await fetch(`${base}/api/tasks/${id}`)
+    if (goneRes.status !== 404) {
+      throw new Error('expected 404 after delete')
+    }
+
     console.log('smoke-api: ok')
   } finally {
     child.kill('SIGTERM')
