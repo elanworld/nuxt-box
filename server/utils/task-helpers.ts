@@ -124,3 +124,13 @@ export async function updateTask(
 
   return getTaskWithUpdates(event, taskId)
 }
+
+export async function deleteTask(event: H3Event, taskId: string) {
+  const db = useSqliteDb(event)
+  const existing = await getTaskWithUpdates(event, taskId)
+  if (!existing) {
+    throw createError({ statusCode: 404, statusMessage: 'Task not found' })
+  }
+  await db.delete(tasks).where(eq(tasks.id, taskId))
+  return { ok: true, id: taskId }
+}

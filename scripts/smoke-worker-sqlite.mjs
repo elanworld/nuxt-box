@@ -65,6 +65,13 @@ async function run() {
     if (detail.updates.length < 2) {
       throw new Error('expected update history on worker sqlite runtime')
     }
+    const deleteRes = await fetch(`${base}/api/bot/tasks/${task.id}`, {
+      method: 'DELETE',
+      headers: writeHeaders,
+    })
+    if (!deleteRes.ok) {
+      throw new Error(`delete failed: ${deleteRes.status} ${await deleteRes.text()}`)
+    }
     console.log('smoke-worker-sqlite: ok')
   } finally {
     child.kill('SIGTERM')

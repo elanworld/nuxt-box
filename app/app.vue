@@ -6,7 +6,7 @@ useHead({ title: '任务库' })
   <div class="app-shell">
     <header class="app-header">
       <NuxtLink to="/" class="brand">任务库</NuxtLink>
-      <p class="subtitle">待办 / 已办与进展历史</p>
+      <p class="subtitle">待办 / 已办 · 新建、编辑与进展历史</p>
     </header>
     <main>
       <NuxtPage />
