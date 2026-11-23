@@ -1,4 +1,4 @@
-import { createError } from 'h3'
+import { createError, type H3Event } from 'h3'
 import { eq, desc, inArray } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { tasks, taskUpdates, taskStatuses, type TaskStatus } from '../database/schema'
@@ -8,8 +8,8 @@ export function isTaskStatus(value: unknown): value is TaskStatus {
   return typeof value === 'string' && (taskStatuses as readonly string[]).includes(value)
 }
 
-export async function listTasks(statusFilter?: TaskStatus | 'active' | 'all') {
-  const db = useSqliteDb()
+export async function listTasks(event: H3Event, statusFilter?: TaskStatus | 'active' | 'all') {
+  const db = useSqliteDb(event)
   let statusClause
   if (statusFilter === 'active' || statusFilter === undefined) {
     statusClause = inArray(tasks.status, ['todo', 'doing'])
@@ -28,8 +28,8 @@ export async function listTasks(statusFilter?: TaskStatus | 'active' | 'all') {
   return rows
 }
 
-export async function getTaskWithUpdates(taskId: string) {
-  const db = useSqliteDb()
+export async function getTaskWithUpdates(event: H3Event, taskId: string) {
+  const db = useSqliteDb(event)
   const [task] = await db.select().from(tasks).where(eq(tasks.id, taskId)).limit(1)
   if (!task) {
     return null
@@ -42,13 +42,16 @@ export async function getTaskWithUpdates(taskId: string) {
   return { task, updates }
 }
 
-export async function createTask(input: {
-  title: string
-  description?: string | null
-  status?: TaskStatus
-  message?: string
-}) {
-  const db = useSqliteDb()
+export async function createTask(
+  event: H3Event,
+  input: {
+    title: string
+    description?: string | null
+    status?: TaskStatus
+    message?: string
+  },
+) {
+  const db = useSqliteDb(event)
   const now = new Date()
   const id = nanoid()
   const status = input.status ?? 'todo'
@@ -75,21 +78,22 @@ export async function createTask(input: {
     createdAt: now,
   })
 
-  return getTaskWithUpdates(id)
+  return getTaskWithUpdates(event, id)
 }
 
 export async function updateTask(
+  event: H3Event,
   taskId: string,
   input: { status?: TaskStatus; message: string; title?: string; description?: string | null },
 ) {
-  const db = useSqliteDb()
+  const db = useSqliteDb(event)
   const now = new Date()
   const message = input.message.trim()
   if (!message) {
     throw createError({ statusCode: 400, statusMessage: 'message is required' })
   }
 
-  const existing = await getTaskWithUpdates(taskId)
+  const existing = await getTaskWithUpdates(event, taskId)
   if (!existing) {
     throw createError({ statusCode: 404, statusMessage: 'Task not found' })
   }
@@ -118,5 +122,5 @@ export async function updateTask(
     createdAt: now,
   })
 
-  return getTaskWithUpdates(taskId)
+  return getTaskWithUpdates(event, taskId)
 }

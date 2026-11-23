@@ -26,7 +26,7 @@ In `/root/box/shell-tool/config/.git-action/docker-compose.yml`, change only the
 | --- | --- |
 | Production Node | `alanwoods/nuxt-box-node@sha256:7be86926eb63002a193577798fa9ebf95d8730b5dad2f7f5483b4bbf9648adc0` |
 | Alias (same layers as node) | `alanwoods/nuxt-box@sha256:7be86926eb63002a193577798fa9ebf95d8730b5dad2f7f5483b4bbf9648adc0` |
-| Worker SQLite (optional) | `alanwoods/nuxt-box-worker-sqlite@sha256:d21390e76c91c0baa159bac3ef3e22d19a342793f44cb5bae90d2d260fb783ca` |
+| Worker SQLite (optional) | `alanwoods/nuxt-box-worker-sqlite@sha256:0d6add90432ed417767911b1cb16d3359161e4c197de8d3c51a94c975f30f5b2` |
 
 Remove `env_file: ./config/task-library.env` if it only held `TASK_LIBRARY_BOT_TOKEN` — the app no longer reads a fixed bot secret.
 

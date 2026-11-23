@@ -21,7 +21,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'invalid status' })
   }
 
-  return updateTask(id, {
+  return updateTask(event, id, {
     status: body.status,
     message: body.message,
     title: body.title,

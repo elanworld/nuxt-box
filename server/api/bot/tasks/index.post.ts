@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'invalid status' })
   }
 
-  return createTask({
+  return createTask(event, {
     title: body.title,
     description: body.description,
     status: body.status,

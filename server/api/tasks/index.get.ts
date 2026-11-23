@@ -14,6 +14,6 @@ export default defineEventHandler(async (event) => {
     statusFilter = filter
   }
 
-  const tasks = await listTasks(statusFilter)
+  const tasks = await listTasks(event, statusFilter)
   return { tasks }
 })

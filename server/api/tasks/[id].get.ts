@@ -5,7 +5,7 @@ export default defineEventHandler(async (event) => {
   if (!id) {
     throw createError({ statusCode: 400, statusMessage: 'Missing task id' })
   }
-  const result = await getTaskWithUpdates(id)
+  const result = await getTaskWithUpdates(event, id)
   if (!result) {
     throw createError({ statusCode: 404, statusMessage: 'Task not found' })
   }
