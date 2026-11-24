@@ -25,7 +25,7 @@ const error = ref('')
 const showCreate = ref(false)
 const createTitle = ref('')
 const createDescription = ref('')
-const createStatus = ref('todo')
+const createStatus = ref<(typeof taskStatusOptions)[number]['value']>('todo')
 const createMessage = ref('任务已创建')
 
 const { createTask, saving, actionError } = useTaskWriter()
@@ -59,7 +59,8 @@ async function submitCreate() {
   }
   saving.value = true
   try {
-    const result = await createTask({
+    const newTaskTab = ({ todo: 'active', doing: 'active', done: 'done', cancelled: 'all' } as const)[createStatus.value]
+    await createTask({
       title,
       description: createDescription.value.trim() || null,
       status: createStatus.value,
@@ -70,7 +71,11 @@ async function submitCreate() {
     createStatus.value = 'todo'
     createMessage.value = '任务已创建'
     showCreate.value = false
-    await navigateTo(`/tasks/${result.task.id}`)
+    if (activeTab.value === newTaskTab || activeTab.value === 'all') {
+      await loadTasks()
+    } else {
+      activeTab.value = newTaskTab
+    }
   } catch (e) {
     actionError.value = e instanceof Error ? e.message : '创建失败'
   } finally {

@@ -17,7 +17,7 @@ export function useTaskWriter() {
     })
   }
 
-  async function updateTask(id: string, input: TaskWriteInput & { message: string }) {
+  async function updateTask(id: string, input: Partial<TaskWriteInput> & { message: string }) {
     return requestFetch(`/api/bot/tasks/${id}`, {
       method: 'PATCH',
       body: input,

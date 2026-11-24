@@ -88,6 +88,28 @@ async function submitEdit() {
   }
 }
 
+async function changeStatus(event: Event) {
+  const select = event.target as HTMLSelectElement
+  const task = data.value?.task
+  const status = select.value
+  if (!task || saving.value || status === task.status) return
+
+  actionError.value = ''
+  saving.value = true
+  try {
+    await updateTask(task.id, {
+      status,
+      message: `状态更新为：${statusLabel(status)}`,
+    })
+    await refresh()
+  } catch (e) {
+    select.value = task.status
+    actionError.value = e instanceof Error ? e.message : '状态保存失败'
+  } finally {
+    saving.value = false
+  }
+}
+
 async function confirmDelete() {
   if (!import.meta.client) return
   if (!window.confirm('确定删除该任务？删除后无法恢复（含进展历史）。')) return
@@ -123,7 +145,15 @@ async function confirmDelete() {
       </p>
 
       <div class="actions">
-        <button v-if="!editing" type="button" class="btn" @click="startEdit">编辑</button>
+        <button v-if="!editing" type="button" class="btn" :disabled="saving" @click="startEdit">编辑</button>
+        <label v-if="!editing" class="quick-status">
+          <span>状态</span>
+          <select class="btn" :value="data.task.status" :disabled="saving" @change="changeStatus">
+            <option v-for="opt in taskStatusOptions" :key="opt.value" :value="opt.value">
+              {{ opt.label }}
+            </option>
+          </select>
+        </label>
         <button type="button" class="btn danger" :disabled="saving" @click="confirmDelete">删除</button>
       </div>
 
@@ -212,8 +242,16 @@ h1 {
   font-size: 0.85rem;
 }
 
+.quick-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
 .actions {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 0.5rem;
   margin: 1rem 0;
 }
