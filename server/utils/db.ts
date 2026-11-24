@@ -1,17 +1,9 @@
-import Database from 'better-sqlite3'
-import { drizzle as drizzleSqlite } from 'drizzle-orm/better-sqlite3'
 import { drizzle as drizzleD1 } from 'drizzle-orm/d1'
-import { mkdirSync } from 'node:fs'
-import { dirname } from 'node:path'
 import { createError, type H3Event } from 'h3'
 import * as schema from '../database/schema'
-import { runSqliteMigrations } from './migrate'
-import { getSqlitePath } from './config'
+import { getRuntimeD1, useNodeDb } from '#task-node-db'
 
-type AppDb = ReturnType<typeof drizzleSqlite<typeof schema>>
-
-let sqlite: Database.Database | undefined
-let db: AppDb | undefined
+type AppDb = ReturnType<typeof useNodeDb>
 
 function usesCloudflareDriver() {
   if (process.env.TASK_LIBRARY_RUNTIME === 'cloudflare') {
@@ -22,7 +14,7 @@ function usesCloudflareDriver() {
 }
 
 export function useSqliteDb(event: H3Event): AppDb {
-  const d1 = (event.context.cloudflare?.env as { DB?: D1Database } | undefined)?.DB
+  const d1 = (event.context.cloudflare?.env as { DB?: D1Database } | undefined)?.DB ?? getRuntimeD1()
   if (d1 || usesCloudflareDriver()) {
     if (!d1) {
       throw createError({ statusCode: 503, statusMessage: 'D1 binding DB is not configured' })
@@ -30,16 +22,5 @@ export function useSqliteDb(event: H3Event): AppDb {
     return drizzleD1(d1, { schema }) as unknown as AppDb
   }
 
-  if (db) {
-    return db
-  }
-
-  const path = getSqlitePath()
-  mkdirSync(dirname(path), { recursive: true })
-
-  sqlite = new Database(path)
-  sqlite.pragma('journal_mode = WAL')
-  runSqliteMigrations(sqlite)
-  db = drizzleSqlite(sqlite, { schema })
-  return db
+  return useNodeDb()
 }

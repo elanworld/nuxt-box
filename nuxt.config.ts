@@ -1,9 +1,16 @@
+import { fileURLToPath } from 'node:url'
+
+const sitesBuild = process.env.NUXT_SITES_BUILD === '1'
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: process.env.NODE_ENV !== 'production' },
   future: { compatibilityVersion: 4 },
   srcDir: 'app',
+  alias: {
+    '#task-node-db': fileURLToPath(new URL(sitesBuild ? './server/database/drivers/db-sites.ts' : './server/database/drivers/db-node.ts', import.meta.url)),
+  },
   app: {
     baseURL: process.env.NUXT_APP_BASE_URL || '/task-library/',
     head: {
@@ -24,7 +31,7 @@ export default defineNuxtConfig({
       inline: ['drizzle-orm'],
       external: ['better-sqlite3'],
     },
-    moduleSideEffects: ['better-sqlite3'],
+    moduleSideEffects: sitesBuild ? [] : ['better-sqlite3'],
   },
   vite: {
     optimizeDeps: {

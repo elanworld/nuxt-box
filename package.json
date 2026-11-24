@@ -15,7 +15,8 @@
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "test:api": "node ./scripts/smoke-api.mjs",
-    "test:worker-sqlite": "node ./scripts/smoke-worker-sqlite.mjs"
+    "test:worker-sqlite": "node ./scripts/smoke-worker-sqlite.mjs",
+    "build:sites": "NUXT_SITES_BUILD=1 NUXT_APP_BASE_URL=/ npm run build:cloudflare-d1 && node scripts/package-sites-output.mjs"
   },
   "dependencies": {
     "better-sqlite3": "^13.2.0",

@@ -6,8 +6,11 @@ CREATE TABLE IF NOT EXISTS tasks (
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL
 );
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS tasks_status_idx ON tasks (status);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS tasks_updated_idx ON tasks (updated_at);
+--> statement-breakpoint
 
 CREATE TABLE IF NOT EXISTS task_updates (
   id TEXT PRIMARY KEY NOT NULL,
@@ -16,4 +19,5 @@ CREATE TABLE IF NOT EXISTS task_updates (
   message TEXT NOT NULL,
   created_at INTEGER NOT NULL
 );
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS task_updates_task_idx ON task_updates (task_id);
