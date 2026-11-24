@@ -21,6 +21,7 @@ const activeTab = ref<(typeof tabs)[number]['key']>('active')
 const tasks = ref<TaskRow[]>([])
 const loading = ref(false)
 const error = ref('')
+const copyFeedback = ref<{ taskId: string; message: string }>()
 
 const showCreate = ref(false)
 const createTitle = ref('')
@@ -83,6 +84,16 @@ async function submitCreate() {
   }
 }
 
+async function copyTask(task: TaskRow) {
+  const content = task.description ? `${task.title}\n${task.description}` : task.title
+  try {
+    await navigator.clipboard.writeText(content)
+    copyFeedback.value = { taskId: task.id, message: '已复制' }
+  } catch {
+    copyFeedback.value = { taskId: task.id, message: '复制失败，请选中文字手动复制' }
+  }
+}
+
 watch(activeTab, () => loadTasks(), { immediate: true })
 </script>
 
@@ -140,14 +151,20 @@ watch(activeTab, () => loadTasks(), { immediate: true })
 
     <ul v-else class="task-list">
       <li v-for="task in tasks" :key="task.id">
-        <NuxtLink :to="`/tasks/${task.id}`" class="task-card">
+        <article class="task-card">
           <div class="row">
-            <h2>{{ task.title }}</h2>
+            <h2><NuxtLink :to="`/tasks/${task.id}`">{{ task.title }}</NuxtLink></h2>
             <span class="badge" :data-status="task.status">{{ statusLabel(task.status) }}</span>
           </div>
-          <p v-if="task.description" class="desc">{{ task.description }}</p>
-          <p class="meta">更新于 {{ task.updatedAt }}</p>
-        </NuxtLink>
+          <p class="desc">{{ task.description || '暂无描述' }}</p>
+          <div class="task-footer">
+            <p class="meta">更新于 {{ task.updatedAt }}</p>
+            <button type="button" class="tab" @click="copyTask(task)">复制</button>
+            <span v-if="copyFeedback?.taskId === task.id" class="meta" role="status">
+              {{ copyFeedback.message }}
+            </span>
+          </div>
+        </article>
       </li>
     </ul>
   </section>
@@ -298,7 +315,21 @@ h2 {
   color: var(--cancelled);
 }
 
+.task-footer {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.task-footer .meta {
+  margin: 0;
+}
+
 .desc {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
   margin: 0.4rem 0 0;
   color: var(--muted);
 }
