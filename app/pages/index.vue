@@ -353,6 +353,10 @@ h2 {
 }
 
 .desc {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   margin: 0.4rem 0 0;
