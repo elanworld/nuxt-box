@@ -8,6 +8,14 @@ export function isTaskStatus(value: unknown): value is TaskStatus {
   return typeof value === 'string' && (taskStatuses as readonly string[]).includes(value)
 }
 
+export function normalizeTaskTags(value: unknown): string[] | undefined {
+  if (value === undefined) return undefined
+  if (!Array.isArray(value) || value.some((tag) => typeof tag !== 'string' || !tag.trim() || /[\r\n]/.test(tag))) {
+    throw createError({ statusCode: 400, statusMessage: 'tags must be an array of non-empty single-line strings' })
+  }
+  return [...new Set(value.map((tag: string) => tag.trim()))]
+}
+
 export async function listTasks(event: H3Event, statusFilter?: TaskStatus | 'active' | 'all', tag?: string) {
   const db = useSqliteDb(event)
   let statusClause
@@ -53,6 +61,7 @@ export async function createTask(
     description?: string | null
     status?: TaskStatus
     message?: string
+    tags?: string[]
   },
 ) {
   const db = useSqliteDb(event)
@@ -69,6 +78,7 @@ export async function createTask(
     title,
     description: input.description?.trim() || null,
     status,
+    tags: input.tags ?? [],
     createdAt: now,
     updatedAt: now,
   })

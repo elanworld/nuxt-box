@@ -1,5 +1,5 @@
 import { readBody } from 'h3'
-import { createTask, isTaskStatus } from '../../../utils/task-helpers'
+import { createTask, isTaskStatus, normalizeTaskTags } from '../../../utils/task-helpers'
 
 export default defineEventHandler(async (event) => {
   const body = await readBody<{
@@ -7,6 +7,7 @@ export default defineEventHandler(async (event) => {
     description?: string | null
     status?: string
     message?: string
+    tags?: unknown
   }>(event)
 
   if (!body?.title) {
@@ -21,5 +22,6 @@ export default defineEventHandler(async (event) => {
     description: body.description,
     status: body.status,
     message: body.message,
+    tags: normalizeTaskTags(body.tags),
   })
 })

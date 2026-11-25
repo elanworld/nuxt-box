@@ -26,6 +26,7 @@ const copyFeedback = ref<{ taskId: string; message: string }>()
 const showCreate = ref(false)
 const createTitle = ref('')
 const createDescription = ref('')
+const createTags = ref('')
 const createStatus = ref<(typeof taskStatusOptions)[number]['value']>('todo')
 const createMessage = ref('任务已创建')
 
@@ -64,11 +65,13 @@ async function submitCreate() {
     await createTask({
       title,
       description: createDescription.value.trim() || null,
+      tags: createTags.value.split(/\r?\n/).map((tag) => tag.trim()).filter(Boolean),
       status: createStatus.value,
       message: createMessage.value.trim() || '任务已创建',
     })
     createTitle.value = ''
     createDescription.value = ''
+    createTags.value = ''
     createStatus.value = 'todo'
     createMessage.value = '任务已创建'
     showCreate.value = false
@@ -126,6 +129,10 @@ watch(activeTab, () => loadTasks(), { immediate: true })
       <label class="field">
         <span>说明（选填）</span>
         <textarea v-model="createDescription" rows="3" placeholder="任务说明" />
+      </label>
+      <label class="field">
+        <span>标签（选填，每行一个）</span>
+        <textarea v-model="createTags" rows="2" placeholder="例如：开发" />
       </label>
       <label class="field">
         <span>状态</span>

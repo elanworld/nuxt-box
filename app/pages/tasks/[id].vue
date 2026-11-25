@@ -176,16 +176,16 @@ async function confirmDelete() {
           <textarea v-model="editDescription" rows="3" />
         </label>
         <label class="field">
+          <span>标签（选填，每行一个）</span>
+          <textarea v-model="editTags" rows="2" placeholder="例如：开发" />
+        </label>
+        <label class="field">
           <span>状态</span>
           <select v-model="editStatus">
             <option v-for="opt in taskStatusOptions" :key="opt.value" :value="opt.value">
               {{ opt.label }}
             </option>
           </select>
-        </label>
-        <label class="field">
-          <span>标签（每行一个）</span>
-          <textarea v-model="editTags" rows="3" />
         </label>
         <label class="field">
           <span>本次进展说明（必填）</span>
