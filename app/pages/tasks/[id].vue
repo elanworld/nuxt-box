@@ -32,7 +32,8 @@ const { data, error, pending, refresh } = await useAsyncData(
 const editing = ref(false)
 const editTitle = ref('')
 const editDescription = ref('')
-const editTags = ref('')
+const editTags = ref<string[]>([])
+const editTagDraft = ref('')
 const editStatus = ref('todo')
 const editMessage = ref('')
 
@@ -44,7 +45,8 @@ watch(
     if (!value?.task) return
     editTitle.value = value.task.title
     editDescription.value = value.task.description ?? ''
-    editTags.value = value.task.tags.join('\n')
+    editTags.value = [...value.task.tags]
+    editTagDraft.value = ''
     editStatus.value = value.task.status
     editMessage.value = ''
   },
@@ -57,7 +59,8 @@ function startEdit() {
   if (data.value?.task) {
     editTitle.value = data.value.task.title
     editDescription.value = data.value.task.description ?? ''
-    editTags.value = data.value.task.tags.join('\n')
+    editTags.value = [...data.value.task.tags]
+    editTagDraft.value = ''
     editStatus.value = data.value.task.status
     editMessage.value = ''
   }
@@ -81,7 +84,7 @@ async function submitEdit() {
       title,
       description: editDescription.value.trim() || null,
       status: editStatus.value,
-      tags: editTags.value.split(/\r?\n/).map((tag) => tag.trim()).filter(Boolean),
+      tags: [...editTags.value, editTagDraft.value.trim()].filter(Boolean),
       message,
     })
     editing.value = false
@@ -175,10 +178,7 @@ async function confirmDelete() {
           <span>说明</span>
           <textarea v-model="editDescription" rows="3" />
         </label>
-        <label class="field">
-          <span>标签（选填，每行一个）</span>
-          <textarea v-model="editTags" rows="2" placeholder="例如：开发" />
-        </label>
+        <TaskTagInput v-model="editTags" v-model:draft="editTagDraft" />
         <label class="field">
           <span>状态</span>
           <select v-model="editStatus">

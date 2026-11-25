@@ -6,6 +6,7 @@ type TaskRow = {
   id: string
   title: string
   description: string | null
+  tags: string[]
   status: string
   createdAt: string
   updatedAt: string
@@ -26,7 +27,8 @@ const copyFeedback = ref<{ taskId: string; message: string }>()
 const showCreate = ref(false)
 const createTitle = ref('')
 const createDescription = ref('')
-const createTags = ref('')
+const createTags = ref<string[]>([])
+const createTagDraft = ref('')
 const createStatus = ref<(typeof taskStatusOptions)[number]['value']>('todo')
 const createMessage = ref('任务已创建')
 
@@ -65,13 +67,14 @@ async function submitCreate() {
     await createTask({
       title,
       description: createDescription.value.trim() || null,
-      tags: createTags.value.split(/\r?\n/).map((tag) => tag.trim()).filter(Boolean),
+      tags: [...createTags.value, createTagDraft.value.trim()].filter(Boolean),
       status: createStatus.value,
       message: createMessage.value.trim() || '任务已创建',
     })
     createTitle.value = ''
     createDescription.value = ''
-    createTags.value = ''
+    createTags.value = []
+    createTagDraft.value = ''
     createStatus.value = 'todo'
     createMessage.value = '任务已创建'
     showCreate.value = false
@@ -130,10 +133,7 @@ watch(activeTab, () => loadTasks(), { immediate: true })
         <span>说明（选填）</span>
         <textarea v-model="createDescription" rows="3" placeholder="任务说明" />
       </label>
-      <label class="field">
-        <span>标签（选填，每行一个）</span>
-        <textarea v-model="createTags" rows="2" placeholder="例如：开发" />
-      </label>
+      <TaskTagInput v-model="createTags" v-model:draft="createTagDraft" />
       <label class="field">
         <span>状态</span>
         <select v-model="createStatus">
@@ -164,6 +164,9 @@ watch(activeTab, () => loadTasks(), { immediate: true })
             <span class="badge" :data-status="task.status">{{ statusLabel(task.status) }}</span>
           </div>
           <p class="desc">{{ task.description || '暂无描述' }}</p>
+          <ul v-if="task.tags.length" class="task-tags" aria-label="任务标签">
+            <li v-for="tag in task.tags" :key="tag" class="badge">{{ tag }}</li>
+          </ul>
           <div class="task-footer">
             <p class="meta">更新于 {{ task.updatedAt }}</p>
             <button type="button" class="tab" @click="copyTask(task)">复制</button>
@@ -320,6 +323,21 @@ h2 {
 }
 .badge[data-status='cancelled'] {
   color: var(--cancelled);
+}
+
+.task-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  padding: 0;
+  margin: 0.5rem 0 0;
+  list-style: none;
+}
+
+.task-tags .badge {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .task-footer {
