@@ -14,6 +14,9 @@ export default defineEventHandler(async (event) => {
     statusFilter = filter
   }
 
-  const tasks = await listTasks(event, statusFilter)
+  if (query.tag !== undefined && (typeof query.tag !== 'string' || !query.tag.trim())) {
+    throw createError({ statusCode: 400, statusMessage: 'tag must be a non-empty string' })
+  }
+  const tasks = await listTasks(event, statusFilter, query.tag?.trim())
   return { tasks }
 })

@@ -2,6 +2,7 @@ export type TaskWriteInput = {
   title: string
   description?: string | null
   status?: string
+  tags?: string[]
   message?: string
 }
 

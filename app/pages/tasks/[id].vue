@@ -10,6 +10,7 @@ type TaskDetail = {
     id: string
     title: string
     description: string | null
+    tags: string[]
     status: string
     createdAt: string
     updatedAt: string
@@ -31,6 +32,7 @@ const { data, error, pending, refresh } = await useAsyncData(
 const editing = ref(false)
 const editTitle = ref('')
 const editDescription = ref('')
+const editTags = ref('')
 const editStatus = ref('todo')
 const editMessage = ref('')
 
@@ -42,6 +44,7 @@ watch(
     if (!value?.task) return
     editTitle.value = value.task.title
     editDescription.value = value.task.description ?? ''
+    editTags.value = value.task.tags.join('\n')
     editStatus.value = value.task.status
     editMessage.value = ''
   },
@@ -54,6 +57,7 @@ function startEdit() {
   if (data.value?.task) {
     editTitle.value = data.value.task.title
     editDescription.value = data.value.task.description ?? ''
+    editTags.value = data.value.task.tags.join('\n')
     editStatus.value = data.value.task.status
     editMessage.value = ''
   }
@@ -77,6 +81,7 @@ async function submitEdit() {
       title,
       description: editDescription.value.trim() || null,
       status: editStatus.value,
+      tags: editTags.value.split(/\r?\n/).map((tag) => tag.trim()).filter(Boolean),
       message,
     })
     editing.value = false
@@ -140,6 +145,9 @@ async function confirmDelete() {
         <span class="badge" :data-status="data.task.status">{{ statusLabel(data.task.status) }}</span>
       </header>
       <p v-if="data.task.description" class="desc">{{ data.task.description }}</p>
+      <p v-if="data.task.tags.length" class="tags">
+        <span v-for="tag in data.task.tags" :key="tag" class="badge">{{ tag }}</span>
+      </p>
       <p class="meta">
         创建于 {{ formatTaskTime(data.task.createdAt) }} · 更新于 {{ formatTaskTime(data.task.updatedAt) }}
       </p>
@@ -174,6 +182,10 @@ async function confirmDelete() {
               {{ opt.label }}
             </option>
           </select>
+        </label>
+        <label class="field">
+          <span>标签（每行一个）</span>
+          <textarea v-model="editTags" rows="3" />
         </label>
         <label class="field">
           <span>本次进展说明（必填）</span>
@@ -235,6 +247,12 @@ h1 {
 
 .desc {
   margin: 0.75rem 0 0;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
 }
 
 .meta {

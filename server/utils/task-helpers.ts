@@ -1,5 +1,5 @@
 import { createError, type H3Event } from 'h3'
-import { eq, desc, inArray } from 'drizzle-orm'
+import { and, eq, desc, inArray, sql } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { tasks, taskUpdates, taskStatuses, type TaskStatus } from '../database/schema'
 import { useSqliteDb } from './db'
@@ -8,7 +8,7 @@ export function isTaskStatus(value: unknown): value is TaskStatus {
   return typeof value === 'string' && (taskStatuses as readonly string[]).includes(value)
 }
 
-export async function listTasks(event: H3Event, statusFilter?: TaskStatus | 'active' | 'all') {
+export async function listTasks(event: H3Event, statusFilter?: TaskStatus | 'active' | 'all', tag?: string) {
   const db = useSqliteDb(event)
   let statusClause
   if (statusFilter === 'active' || statusFilter === undefined) {
@@ -19,10 +19,14 @@ export async function listTasks(event: H3Event, statusFilter?: TaskStatus | 'act
     statusClause = eq(tasks.status, statusFilter)
   }
 
+  const tagClause = tag === undefined ? undefined : sql`exists (
+    select 1 from json_each(${tasks.tags}) as task_tag where task_tag.value = ${tag}
+  )`
+
   const rows = await db
     .select()
     .from(tasks)
-    .where(statusClause)
+    .where(and(statusClause, tagClause))
     .orderBy(desc(tasks.updatedAt))
 
   return rows
@@ -84,7 +88,7 @@ export async function createTask(
 export async function updateTask(
   event: H3Event,
   taskId: string,
-  input: { status?: TaskStatus; message: string; title?: string; description?: string | null },
+  input: { status?: TaskStatus; message: string; title?: string; description?: string | null; tags?: string[] },
 ) {
   const db = useSqliteDb(event)
   const now = new Date()
@@ -108,6 +112,9 @@ export async function updateTask(
   }
   if (input.description !== undefined) {
     patch.description = input.description?.trim() || null
+  }
+  if (input.tags !== undefined) {
+    patch.tags = input.tags
   }
   if (input.status !== undefined) {
     patch.status = input.status

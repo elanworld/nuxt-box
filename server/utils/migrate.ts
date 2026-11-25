@@ -23,5 +23,11 @@ CREATE INDEX IF NOT EXISTS task_updates_task_idx ON task_updates (task_id);
 `
 
 export function runSqliteMigrations(sqlite: Database.Database) {
-  sqlite.exec(MIGRATION_SQL)
+  sqlite.transaction(() => {
+    sqlite.exec(MIGRATION_SQL)
+    const column = sqlite.prepare("SELECT name FROM pragma_table_info('tasks') WHERE name = 'tags'").get()
+    if (!column) {
+      sqlite.exec("ALTER TABLE tasks ADD COLUMN tags TEXT DEFAULT '[]' NOT NULL")
+    }
+  }).immediate()
 }

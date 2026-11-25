@@ -9,6 +9,7 @@ export const tasks = sqliteTable(
     id: text('id').primaryKey(),
     title: text('title').notNull(),
     description: text('description'),
+    tags: text('tags', { mode: 'json' }).$type<string[]>().notNull().default([]),
     status: text('status').notNull().default('todo'),
     createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
     updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
